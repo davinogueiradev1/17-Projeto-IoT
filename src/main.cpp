@@ -20,30 +20,21 @@
 // CALLBACK MQTT
 //==================================================
 
-void mensagemRecebida(char* topico, String mensagem)
+void mensagemRecebida(const char *topico, const String &mensagem)
 {
     debugInfo("=================");
     debugInfo("Mensagem MQTT recebida");
     debugInfo("=================");
 
-    //========================================
-    // JSON
-    //========================================
-
     JsonDocument documento;
 
-    DeserializationError erro =
-        deserializeJson(documento, mensagem);
+    DeserializationError erro = deserializeJson(documento, mensagem);
 
-    if(erro)
+    if (erro)
     {
         debugErro("Erro ao desserializar JSON.");
         return;
     }
-
-    //========================================
-    // OBTENDO VALORES
-    //========================================
 
     int ar = documento["ar"];
     int comando = documento["comando"];
@@ -53,11 +44,7 @@ void mensagemRecebida(char* topico, String mensagem)
     debugInfo("Comando: " + String(comando));
     debugInfo("Valor: " + String(valor));
 
-    //========================================
-    // VALIDACAO
-    //========================================
-
-    if(ar < 1 || ar > 4)
+    if (ar < 1 || ar > 4)
     {
         debugErro("Numero de ar invalido.");
         return;
@@ -65,47 +52,31 @@ void mensagemRecebida(char* topico, String mensagem)
 
     int indiceAr = ar - 1;
 
-    //========================================
-    // COMANDOS
-    //========================================
-
-    switch(comando)
+    switch (comando)
     {
-        case COMANDO_LIGAR:
-
+        case 1:
             ligarAr(indiceAr);
+            break;
 
-        break;
-
-        case COMANDO_DESLIGAR:
-
+        case 2:
             desligarAr(indiceAr);
+            break;
 
-        break;
-
-        case COMANDO_AUMENTAR_TEMP:
-
+        case 3:
             aumentarTemperatura(indiceAr);
+            break;
 
-        break;
-
-        case COMANDO_DIMINUIR_TEMP:
-
+        case 4:
             diminuirTemperatura(indiceAr);
+            break;
 
-        break;
-
-        case COMANDO_DEFINIR_TEMP:
-
+        case 5:
             definirTemperatura(indiceAr, valor);
-
-        break;
+            break;
 
         default:
-
             debugErro("Comando invalido.");
-
-        break;
+            break;
     }
 }
 
