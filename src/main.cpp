@@ -7,81 +7,48 @@
 #include "AirConditionerManager.h"
 
 //==================================================
-// DEFINES
-//==================================================
-
-#define COMANDO_LIGAR              1
-#define COMANDO_DESLIGAR           2
-#define COMANDO_AUMENTAR_TEMP      3
-#define COMANDO_DIMINUIR_TEMP      4
-#define COMANDO_DEFINIR_TEMP       5
-
-//==================================================
-// CALLBACK MQTT
-//==================================================
 
 void mensagemRecebida(const char *topico, const String &mensagem)
 {
-    debugInfo("=================");
-    debugInfo("Mensagem MQTT recebida");
-    debugInfo("=================");
+    debugInfo("MQTT recebido");
 
-    JsonDocument documento;
+    JsonDocument doc;
 
-    DeserializationError erro = deserializeJson(documento, mensagem);
+    DeserializationError err = deserializeJson(doc, mensagem);
 
-    if (erro)
+    if(err)
     {
-        debugErro("Erro ao desserializar JSON.");
+        debugErro("JSON invalido");
         return;
     }
 
-    int ar = documento["ar"];
-    int comando = documento["comando"];
-    int valor = documento["valor"];
+    JsonObject ar = doc["ar-condicionado"];
 
-    debugInfo("AR: " + String(ar));
-    debugInfo("Comando: " + String(comando));
-    debugInfo("Valor: " + String(valor));
+    int esp = ar["esp"];
+    int estado = ar["estado"];
+    int temperatura = ar["temperatura"];
+    int modo = ar["modo"];
+    int vento = ar["vento"];
 
-    if (ar < 1 || ar > 4)
+    debugInfo("ESP: " + String(esp));
+
+    if(esp < 1 || esp > 4)
     {
-        debugErro("Numero de ar invalido.");
+        debugErro("ESP invalido");
         return;
     }
 
-    int indiceAr = ar - 1;
+    int index = esp - 1;
 
-    switch (comando)
-    {
-        case 1:
-            ligarAr(indiceAr);
-            break;
-
-        case 2:
-            desligarAr(indiceAr);
-            break;
-
-        case 3:
-            aumentarTemperatura(indiceAr);
-            break;
-
-        case 4:
-            diminuirTemperatura(indiceAr);
-            break;
-
-        case 5:
-            definirTemperatura(indiceAr, valor);
-            break;
-
-        default:
-            debugErro("Comando invalido.");
-            break;
-    }
+    setEstadoCompleto(
+        index,
+        estado,
+        temperatura,
+        modo,
+        vento
+    );
 }
 
-//==================================================
-// SETUP
 //==================================================
 
 void setup()
@@ -97,12 +64,8 @@ void setup()
     conectarMQTT();
 
     configurarArCondicionado();
-
-    debugInfo("Sistema iniciado.");
 }
 
-//==================================================
-// LOOP
 //==================================================
 
 void loop()
@@ -112,6 +75,4 @@ void loop()
     garantirMQTTConectado();
 
     loopMQTT();
-
-    delay(10);
 }
