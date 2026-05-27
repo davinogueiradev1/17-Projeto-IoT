@@ -213,7 +213,7 @@ void conectarMQTT()
 
 void garantirMQTTConectado()
 {
-    if(!wifiEstaConectado)
+    if(!wifiEstaConectado())
     {
         debugErro("MQTT não será reconectado porque o WiFi está desconectado.");
         return;

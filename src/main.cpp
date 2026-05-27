@@ -1,63 +1,146 @@
 #include <Arduino.h>
-#include <IRremoteESP8266.h>
-#include <IRsend.h>
-#include <ir_Fujitsu.h>
+#include <ArduinoJson.h>
 
-struct EstadoAr {
-  bool ligado;
-  uint8_t temperatura;
-  uint8_t modo;
-  uint8_t ventilacao;
-  uint8_t swing;
-};
+#include "WiFiManager.h"
+#include "MqttManager.h"
+#include "DebugManager.h"
+#include "AirConditionerManager.h"
 
-const uint16_t PINO_IR = 4;
+//==================================================
+// DEFINES
+//==================================================
 
-IRFujitsuAC ac(PINO_IR);
+#define COMANDO_LIGAR              1
+#define COMANDO_DESLIGAR           2
+#define COMANDO_AUMENTAR_TEMP      3
+#define COMANDO_DIMINUIR_TEMP      4
+#define COMANDO_DEFINIR_TEMP       5
 
-EstadoAr estadoAtual = {
-  true,
-  24,
-  kFujitsuAcModeCool,
-  kFujitsuAcFanHigh,
-  kFujitsuAcSwingOff
-};
+//==================================================
+// CALLBACK MQTT
+//==================================================
 
-void aplicarEstado(EstadoAr estado) {
+void mensagemRecebida(char* topico, String mensagem)
+{
+    debugInfo("=================");
+    debugInfo("Mensagem MQTT recebida");
+    debugInfo("=================");
 
-  ac.setModel(ARRAH2E);
+    //========================================
+    // JSON
+    //========================================
 
-  ac.setTemp(estado.temperatura);
+    JsonDocument documento;
 
-  ac.setMode(estado.modo);
+    DeserializationError erro =
+        deserializeJson(documento, mensagem);
 
-  ac.setFanSpeed(estado.ventilacao);
+    if(erro)
+    {
+        debugErro("Erro ao desserializar JSON.");
+        return;
+    }
 
-  ac.setSwing(estado.swing);
+    //========================================
+    // OBTENDO VALORES
+    //========================================
 
-  if (estado.ligado) {
-    ac.setCmd(kFujitsuAcCmdTurnOn);
-  }
-  else {
-    ac.setCmd(kFujitsuAcCmdTurnOff);
-  }
+    int ar = documento["ar"];
+    int comando = documento["comando"];
+    int valor = documento["valor"];
 
-  ac.send();
+    debugInfo("AR: " + String(ar));
+    debugInfo("Comando: " + String(comando));
+    debugInfo("Valor: " + String(valor));
 
-  Serial.println(ac.toString());
+    //========================================
+    // VALIDACAO
+    //========================================
+
+    if(ar < 1 || ar > 4)
+    {
+        debugErro("Numero de ar invalido.");
+        return;
+    }
+
+    int indiceAr = ar - 1;
+
+    //========================================
+    // COMANDOS
+    //========================================
+
+    switch(comando)
+    {
+        case COMANDO_LIGAR:
+
+            ligarAr(indiceAr);
+
+        break;
+
+        case COMANDO_DESLIGAR:
+
+            desligarAr(indiceAr);
+
+        break;
+
+        case COMANDO_AUMENTAR_TEMP:
+
+            aumentarTemperatura(indiceAr);
+
+        break;
+
+        case COMANDO_DIMINUIR_TEMP:
+
+            diminuirTemperatura(indiceAr);
+
+        break;
+
+        case COMANDO_DEFINIR_TEMP:
+
+            definirTemperatura(indiceAr, valor);
+
+        break;
+
+        default:
+
+            debugErro("Comando invalido.");
+
+        break;
+    }
 }
 
-void setup() {
+//==================================================
+// SETUP
+//==================================================
 
-  Serial.begin(115200);
+void setup()
+{
+    configurarDebug();
 
-  ac.begin();
+    conectarWifi();
 
-  delay(1000);
+    configurarMQTT();
 
-  aplicarEstado(estadoAtual);
+    registrarCallbackMensagem(mensagemRecebida);
+
+    conectarMQTT();
+
+    configurarArCondicionado();
+
+    debugInfo("Sistema iniciado.");
 }
 
-void loop() {
+//==================================================
+// LOOP
+//==================================================
 
+void loop()
+{
+    garantirWiFiConectado();
+
+    garantirMQTTConectado();
+
+    loopMQTT();
+
+    delay(10);
 }
