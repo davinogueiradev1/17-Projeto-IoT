@@ -14,9 +14,7 @@ void mensagemRecebida(const char *topico, const String &mensagem)
 
     JsonDocument doc;
 
-    DeserializationError err = deserializeJson(doc, mensagem);
-
-    if(err)
+    if(deserializeJson(doc, mensagem))
     {
         debugErro("JSON invalido");
         return;
@@ -30,8 +28,6 @@ void mensagemRecebida(const char *topico, const String &mensagem)
     int modo = ar["modo"];
     int vento = ar["vento"];
 
-    debugInfo("ESP: " + String(esp));
-
     if(esp < 1 || esp > 4)
     {
         debugErro("ESP invalido");
@@ -40,7 +36,7 @@ void mensagemRecebida(const char *topico, const String &mensagem)
 
     int index = esp - 1;
 
-    setEstadoCompleto(
+    atualizarEstado(
         index,
         estado,
         temperatura,
@@ -71,8 +67,6 @@ void setup()
 void loop()
 {
     garantirWiFiConectado();
-
     garantirMQTTConectado();
-
     loopMQTT();
 }

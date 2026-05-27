@@ -6,9 +6,11 @@
 
 #include "DebugManager.h"
 
-//============================
+//==================================================
+// HARDWARE IR (TSAL)
+//==================================================
 
-IRFujitsuAC ar[4] =
+IRFujitsuAC ac[4] =
 {
     IRFujitsuAC(16),
     IRFujitsuAC(17),
@@ -16,24 +18,27 @@ IRFujitsuAC ar[4] =
     IRFujitsuAC(19)
 };
 
-//============================
+//==================================================
+// ESTADO INTERNO (CRÍTICO)
+//==================================================
 
-void configurarArCondicionado()
+struct EstadoAr
 {
-    for(int i = 0; i < 4; i++)
-    {
-        ar[i].begin();
-        ar[i].setModel(ARRAH2E);
-    }
+    bool ligado;
+    int temperatura;
+    uint8_t modo;
+    uint8_t vento;
+};
 
-    debugInfo("Ar condicionado pronto");
-}
+EstadoAr estados[4];
 
-//============================
+//==================================================
+// MAPAS
+//==================================================
 
-int modoMap(int modo)
+uint8_t mapModo(int m)
 {
-    switch(modo)
+    switch(m)
     {
         case 1: return kFujitsuAcModeAuto;
         case 2: return kFujitsuAcModeCool;
@@ -43,11 +48,9 @@ int modoMap(int modo)
     }
 }
 
-//============================
-
-int fanMap(int vento)
+uint8_t mapVento(int v)
 {
-    switch(vento)
+    switch(v)
     {
         case 1: return kFujitsuAcFanAuto;
         case 2: return kFujitsuAcFanHigh;
@@ -58,42 +61,82 @@ int fanMap(int vento)
     }
 }
 
-//============================
+//==================================================
+// ENVIO IR (SEMPRE ESTADO COMPLETO)
+//==================================================
 
-void setEstadoCompleto(
-    int arIndex,
+void enviar(int i)
+{
+    if(estados[i].ligado)
+        ac[i].setCmd(kFujitsuAcCmdTurnOn);
+    else
+        ac[i].setCmd(kFujitsuAcCmdTurnOff);
+
+    ac[i].setTemp(estados[i].temperatura);
+    ac[i].setMode(estados[i].modo);
+    ac[i].setFanSpeed(estados[i].vento);
+    ac[i].setSwing(kFujitsuAcSwingOff);
+
+    ac[i].send();
+
+    debugInfo("IR enviado AR " + String(i + 1));
+}
+
+//==================================================
+// SETUP
+//==================================================
+
+void configurarArCondicionado()
+{
+    for(int i = 0; i < 4; i++)
+    {
+        ac[i].begin();
+        ac[i].setModel(ARRAH2E);
+
+        estados[i].ligado = false;
+        estados[i].temperatura = 24;
+        estados[i].modo = kFujitsuAcModeCool;
+        estados[i].vento = kFujitsuAcFanAuto;
+    }
+
+    debugInfo("Ar condicionado pronto");
+}
+
+//==================================================
+// UPDATE PRINCIPAL
+//==================================================
+
+void atualizarEstado(
+    int ar,
     int estado,
-    int temperatura,
+    int temperaturaCmd,
     int modo,
     int vento
 )
 {
-    if(arIndex < 0 || arIndex > 3)
+    if(ar < 0 || ar > 3)
         return;
 
-    IRFujitsuAC &ac = ar[arIndex];
-
     // POWER
-    if(estado == 1)
-        ac.setCmd(kFujitsuAcCmdTurnOn);
-    else
-        ac.setCmd(kFujitsuAcCmdTurnOff);
+    estados[ar].ligado = (estado == 1);
 
-    // TEMP
-    if(temperatura == 1)
-        ac.setTemp(24); // default seguro
-    else if(temperatura == 0)
-        ac.setTemp(24);
+    // TEMPERATURA (COMANDO RELATIVO)
+    if(temperaturaCmd == 1)
+        estados[ar].temperatura++;
+    else if(temperaturaCmd == 0)
+        estados[ar].temperatura--;
+
+    if(estados[ar].temperatura < 16)
+        estados[ar].temperatura = 16;
+
+    if(estados[ar].temperatura > 30)
+        estados[ar].temperatura = 30;
 
     // MODO
-    ac.setMode(modoMap(modo));
+    estados[ar].modo = mapModo(modo);
 
-    // VENTILACAO
-    ac.setFanSpeed(fanMap(vento));
+    // VENTO
+    estados[ar].vento = mapVento(vento);
 
-    ac.setSwing(kFujitsuAcSwingOff);
-
-    ac.send();
-
-    debugInfo("IR enviado AR " + String(arIndex + 1));
+    enviar(ar);
 }
