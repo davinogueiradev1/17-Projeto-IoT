@@ -1,4 +1,4 @@
-//! DebugManager.h
+//* DebugManager.h
 
 #ifndef DEBUG_MANAGER_H
 #define DEBUG_MANAGER_H
@@ -18,5 +18,6 @@ void debugErroSemLinha(const String& mensagem);
 void debugInfoSemLinha(const String& mensagem);
 
 int obterNivelDebugAtual();
+
 
 #endif

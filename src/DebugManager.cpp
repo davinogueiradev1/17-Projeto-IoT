@@ -1,4 +1,4 @@
-//! DebugManager.cpp
+//* DebugManager.cpp
 
 #include <Arduino.h>
 #include "DebugManager.h"
@@ -10,7 +10,7 @@ void debugErro(const String& mensagem)
 {
     if(nivelDebugAtual >= DEBUG_ERRO)
     {
-        Serial.print("[ERRO] ");
+        Serial.print(" [ERRO] ");
         Serial.println(mensagem);
     }
 }
@@ -27,7 +27,7 @@ void debugInfo(const String& mensagem)
 {
     if(nivelDebugAtual >= DEBUG_TUDO)
     {
-        Serial.print("[INFO] ");
+        Serial.print(" [INFO] ");
         Serial.println(mensagem);
     }
 }
@@ -56,25 +56,25 @@ void configurarDebug()
         nivelDebugAtual = DEBUG_NIVEL_INICIAL;
     }
 
-    for(int i = 0; i < 5; i++)
+    for (int i = 0; i < 5; i++)
     {
-        debugInfoSemLinha("");
+        debugInfoSemLinha(" ");
     }
 
     debugInfo("=============");
-    debugInfo("ESP32 Iniciado");
-    debugInfo("Sistema de Debug Ativo");
+    debugInfo(" ESP32 Iniciado");
+    debugInfo(" Sistema de debug ativo");
     if(nivelDebugAtual == DEBUG_ERRO)
     {
-        debugInfo("Debug Iniciado em Modo Apenas Erro");
+        debugInfo (" Debug iniciado em modo apenas erro");
     }
-
     else
     {
-    debugInfo("Debug Iniciado em Modo Completo");
+        debugInfo (" Debug iniciado em modo completo");
     }
     debugInfo("=============");
 }
 
 
-//TODO: Criar a função obterNivelDebugAtual
+
+//TODo: Criar a função obterNivelDebugAtual

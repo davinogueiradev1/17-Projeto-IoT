@@ -1,70 +1,67 @@
 //! WiFiManager.cpp
 #include <Arduino.h>
+#include "WiFiManager.h"
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
-#include "WiFiManager.h"
 #include "secrets.h"
 #include <WiFiClient.h>
 #include "DebugManager.h"
-
-bool wifiEstaConectado()
+bool wifiEstaConectado ()
 {
     return WiFi.status() == WL_CONNECTED;
 }
 
-void conectarWifi()
+void conectarWiFi()
 {
-  debugInfo("============================");
+  debugInfo("===========================");
   debugInfo("Iniciando conexão WiFi...");
-  debugInfo("============================");
+  debugInfo("===========================");
 
-  //Configura o ESP32 como station
-  //Ele vai se conecrar a um roteador existente.
+  // Configura o ESP32 como station, ou seja 
+  //ele vai se conectar a um roteador existente.
   WiFi.mode(WIFI_STA); 
 
-  //Inicia a conexão com SSID e Senha
+  //inicia a conexão com SSID e senha
   WiFi.begin(WIFI_SSID, WIFI_SENHA);
 
-  debugInfo("Conectando");
+  debugInfo("conectando");
 
-  int tentativasWiFi = 0;
-  int maxTentativasWiFi = 30;
-
+int tentativasWiFi = 0;
+const int maxTentativasWiFi = 30;
+  
   //Aguarda a conexão por até 30 tentativas
-  while (WiFi.status() != WL_CONNECTED && tentativasWiFi < maxTentativasWiFi)
+  while(WiFi.status() != WL_CONNECTED && tentativasWiFi < maxTentativasWiFi)
   {
     delay(500);
-    Serial.print(".");
+    debugInfoSemLinha(".");
     tentativasWiFi++;
   }
 
-  debugInfo("");
-  if (WiFi.status() == WL_CONNECTED)
+  debugInfoSemLinha("\n\r");
+  if(WiFi.status() == WL_CONNECTED)
   {
-    debugInfo("WiFi conectado com sucesso!");
+    debugInfoSemLinha("WiFi conectado comsucesso!");
     debugInfoSemLinha("[INFO] Endereço IP: ");
-    debugInfoSemLinha(WiFi.localIP().toString());
-    debugInfoSemLinha("\n\r");
+    debugInfoSemLinha( WiFi.localIP().toString());
   }
-  
+
   else
   {
-    debugInfo("Falha ao conectar ao WiFi");
-    debugInfo("Verifique SSID, senha e sinal de rede.");
+    debugErro("Falha ao conectar noWiFi.");
+    debugErro("Verifique SSID, senha e sinal de rede.");
   }
-  
 }
 
 void garantirWiFiConectado()
 {
   if(WiFi.status() != WL_CONNECTED)
   {
-    debugInfo("WiFi desconectado. Tentando reconectar...");
-    conectarWifi();
+    debugErro("WiFi desconectado. Tentando reconectar...");
+    conectarWiFi();
   }
 
   if(WiFi.status() != WL_CONNECTED)
   {
-    debugInfo("Não foi possivel reconectar ao WiFi.");
+    debugErro("Não foi possivel reconectar ao WiFi.");
   }
 }
