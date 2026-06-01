@@ -15,12 +15,12 @@ void tratarJsonComando(const String &mensagem);
 void enviarACK();
 void controlarAr();
 
-
-const uint8_t ESP_ID = 1;
+const uint8_t ESP_ID = 2;
 const uint16_t PINO_IR = 18;
+uint8_t idAr;
+
 IRFujitsuAC ac(PINO_IR);
 Timezone timeStamp;
-
 
 uint8_t estado;
 uint8_t temperatura;
@@ -106,6 +106,39 @@ void tratarJsonComando(const String &mensagem)
             return;
         }
 
+        if (ar["id_ar"].is<uint8_t>())
+        {
+            idAr = ar["id_ar"].as<uint8_t>();
+
+            // ESP 1 controla apenas os ARs 1 e 2
+            if (ESP_ID == 1)
+            {
+                if (idAr != 1 && idAr != 2)
+                {
+                    debugInfo("AR nao pertence a este ESP.");
+                    return;
+                }
+            }
+
+            // ESP 2 controla apenas os ARs 3 e 4
+            if (ESP_ID == 2)
+            {
+                if (idAr != 3 && idAr != 4)
+                {
+                    debugInfo("AR nao pertence a este ESP.");
+                    return;
+                }
+            }
+
+            debugInfoSemLinha("ID AR: ");
+            Serial.println(idAr);
+        }
+        else
+        {
+            debugErro("ID do ar invalido.");
+            return;
+        }
+
         if (ar["estado"].is<uint8_t>())
         {
             estado = ar["estado"].as<uint8_t>();
@@ -125,7 +158,7 @@ void tratarJsonComando(const String &mensagem)
 
             if (temperatura < 18)
                 temperatura = 18;
-    
+
             // Proteção para não virar uma sauna
             if (temperatura > 30)
                 temperatura = 30;
@@ -189,7 +222,7 @@ void enviarACK()
     // Se preferir o número puro, comente a linha de cima e use esta:
     // LCD["timestamp"] = timeStamp.now();
 
-    // ATENÇÃO: Aumentei o buffer de 64 para 128 bytes! 
+    // ATENÇÃO: Aumentei o buffer de 64 para 128 bytes!
     // Com o timestamp, o texto do JSON cresce e 64 bytes iriam cortar a mensagem.
     char buffer[128];
 
@@ -197,12 +230,10 @@ void enviarACK()
 
     publicarMensagem(
         "senai134/fellipe/esp32/status",
-        buffer
-    );
+        buffer);
 
     debugInfo("Mensagem enviada ao grupo LCD com sucesso.");
 }
-
 
 void controlarAr()
 {
@@ -210,46 +241,46 @@ void controlarAr()
     // (Mudar o modo/vento altera o comando interno para "Alterar Ajuste")
     ac.setTemp(temperatura);
 
-    switch(modo)
+    switch (modo)
     {
-        case 0:
-            ac.setMode(kFujitsuAcModeCool);
-            break;
-        case 1:
-            ac.setMode(kFujitsuAcModeDry);
-            break;
-        case 2:
-            ac.setMode(kFujitsuAcModeFan);
-            break;
-        case 3:
-            ac.setMode(kFujitsuAcModeHeat);
-            break;
+    case 0:
+        ac.setMode(kFujitsuAcModeCool);
+        break;
+    case 1:
+        ac.setMode(kFujitsuAcModeDry);
+        break;
+    case 2:
+        ac.setMode(kFujitsuAcModeFan);
+        break;
+    case 3:
+        ac.setMode(kFujitsuAcModeHeat);
+        break;
     }
 
-    switch(vento)
+    switch (vento)
     {
-        case 0:
-            ac.setFanSpeed(kFujitsuAcFanAuto);
-            break;
-        case 1:
-            ac.setFanSpeed(kFujitsuAcFanQuiet);
-            break;
-        case 2:
-            ac.setFanSpeed(kFujitsuAcFanLow);
-            break;
-        case 3:
-            ac.setFanSpeed(kFujitsuAcFanMed);
-            break;
-        case 4:
-            ac.setFanSpeed(kFujitsuAcFanHigh);
-            break;
+    case 0:
+        ac.setFanSpeed(kFujitsuAcFanAuto);
+        break;
+    case 1:
+        ac.setFanSpeed(kFujitsuAcFanQuiet);
+        break;
+    case 2:
+        ac.setFanSpeed(kFujitsuAcFanLow);
+        break;
+    case 3:
+        ac.setFanSpeed(kFujitsuAcFanMed);
+        break;
+    case 4:
+        ac.setFanSpeed(kFujitsuAcFanHigh);
+        break;
     }
 
     // 2. POR ÚLTIMO, O COMANDO DE ENERGIA
-    // ac.on() ou ac.off() vão sobrescrever o byte de comando, 
+    // ac.on() ou ac.off() vão sobrescrever o byte de comando,
     // garantindo que o ar entenda que deve LIGAR ou DESLIGAR,
     // mas ainda levando junto a temperatura, modo e vento configurados acima.
-    if(estado == 1)
+    if (estado == 1)
     {
         ac.on();
         debugInfo("Ar configurado e ligado.");
