@@ -9,7 +9,7 @@
 
 const char TOPICO_COMANDO[] = "senai134/fellipe/esp32/comando";
 
-void tratarMensagemRecebida(const char* topico, const String& mensagem);
+void tratarMensagemRecebida(const char *topico, const String &mensagem);
 void tratarJsonComando(const String &mensagem);
 void enviarACK();
 void controlarAr();
@@ -23,139 +23,147 @@ uint8_t temperatura;
 uint8_t modo;
 uint8_t vento;
 
-void setup() 
+void setup()
 {
-  configurarDebug();
-  ac.begin();
-  conectarWiFi();
-  configurarMQTT();
-  registrarCallbackMensagem(tratarMensagemRecebida);
-  conectarMQTT();
+    configurarDebug();
+    ac.begin();
+    ac.setModel(ARRAH2E);
+    ac.setId(0);
+    conectarWiFi();
+    configurarMQTT();
+    registrarCallbackMensagem(tratarMensagemRecebida);
+    conectarMQTT();
 }
 
-void loop() 
+void loop()
 {
-  garantirWiFiConectado();
-  garantirMQTTConectado();
-  loopMQTT();
+    garantirWiFiConectado();
+    garantirMQTTConectado();
+    loopMQTT();
 }
 
-void tratarMensagemRecebida(const char* topico, const String& mensagem)
+void tratarMensagemRecebida(const char *topico, const String &mensagem)
 {
-  debugInfo("==============================");
-  debugInfo("Mensagem recebida na aplicação");
-  debugInfo("==============================");
-  
-  if(topico == nullptr)
-  {
-    debugErro("Tópico MQTT inválido");
-    return;
-  }
+    debugInfo("==============================");
+    debugInfo("Mensagem recebida na aplicação");
+    debugInfo("==============================");
 
-  debugInfo("Tópico: " + String(topico));
-  debugInfo("Mensagem: " + mensagem);
+    if (topico == nullptr)
+    {
+        debugErro("Tópico MQTT inválido");
+        return;
+    }
 
-  if(strcmp(topico, TOPICO_COMANDO) == 0)
-  {
-    tratarJsonComando(mensagem);
-    return;
-  }
+    debugInfo("Tópico: " + String(topico));
+    debugInfo("Mensagem: " + mensagem);
 
-  debugErro("Tópico não tratado: " + String(topico));
+    if (strcmp(topico, TOPICO_COMANDO) == 0)
+    {
+        tratarJsonComando(mensagem);
+        return;
+    }
 
+    debugErro("Tópico não tratado: " + String(topico));
 }
 
 void tratarJsonComando(const String &mensagem)
 {
-  JsonDocument doc;
+    JsonDocument doc;
 
-  DeserializationError erro = deserializeJson(doc, mensagem);
+    DeserializationError erro = deserializeJson(doc, mensagem);
 
-  if(erro)
-  {
-    debugErro("Erro ao interpretar JSON.");
-    debugErro(erro.c_str());
-    return;
-  }
-
-  if(doc["ar-condicionado"].is<JsonObject>())
-  {
-    JsonObject ar = doc["ar-condicionado"];
-
-    if(ar["esp"].is<uint8_t>())
+    if (erro)
     {
-        uint8_t esp = ar["esp"].as<uint8_t>();
+        debugErro("Erro ao interpretar JSON.");
+        debugErro(erro.c_str());
+        return;
+    }
 
-        if(esp != 0 && esp != ESP_ID)
+    if (doc["ar-condicionado"].is<JsonObject>())
+    {
+        JsonObject ar = doc["ar-condicionado"];
+
+        if (ar["esp"].is<uint8_t>())
         {
+            uint8_t esp = ar["esp"].as<uint8_t>();
+
+            if (esp != 0 && esp != ESP_ID)
+            {
+                return;
+            }
+        }
+        else
+        {
+            debugErro("ESP inválido.");
+            return;
+        }
+
+        if (ar["estado"].is<uint8_t>())
+        {
+            estado = ar["estado"].as<uint8_t>();
+
+            debugInfoSemLinha("Estado: ");
+            Serial.println(estado);
+        }
+        else
+        {
+            debugErro("Estado inválido.");
+            return;
+        }
+
+        if (ar["temperatura"].is<uint8_t>())
+        {
+            temperatura = ar["temperatura"].as<uint8_t>();
+
+            if (temperatura < 18)
+                temperatura = 18;
+    
+            // Proteção para não virar uma sauna
+            if (temperatura > 30)
+                temperatura = 30;
+
+            debugInfoSemLinha("Temperatura: ");
+            Serial.println(temperatura);
+        }
+        else
+        {
+            debugErro("Temperatura inválida.");
+            return;
+        }
+
+        if (ar["modo"].is<uint8_t>())
+        {
+            modo = ar["modo"].as<uint8_t>();
+
+            debugInfoSemLinha("Modo: ");
+            Serial.println(modo);
+        }
+        else
+        {
+            debugErro("modo inválido.");
+            return;
+        }
+
+        if (ar["vento"].is<uint8_t>())
+        {
+            vento = ar["vento"].as<uint8_t>();
+
+            debugInfoSemLinha("Vento: ");
+            Serial.println(vento);
+        }
+        else
+        {
+            debugErro("vento inválido.");
             return;
         }
     }
     else
     {
-        debugErro("ESP inválido.");
+        debugErro("Objeto ar-condicionado inválido.");
         return;
     }
-
-    if(ar["estado"].is<uint8_t>())
-    {
-      estado = ar["estado"].as<uint8_t>();
-
-      debugInfoSemLinha("Estado: ");
-      Serial.println(estado);
-    }
-    else
-    {
-      debugErro("Estado inválido.");
-      return;
-    }
-
-    if(ar["temperatura"].is<uint8_t>())
-    {
-      temperatura = ar["temperatura"].as<uint8_t>();
-
-      debugInfoSemLinha("Temperatura: ");
-      Serial.println(temperatura);
-    }
-    else
-    {
-      debugErro("Temperatura inválida.");
-      return;
-    }
-
-    if(ar["modo"].is<uint8_t>())
-    {
-      modo = ar["modo"].as<uint8_t>();
-
-      debugInfoSemLinha("Modo: ");
-      Serial.println(modo);
-    }
-    else
-    {
-      debugErro("modo inválido.");
-      return;
-    }
-
-    if(ar["vento"].is<uint8_t>())
-    {
-      vento = ar["vento"].as<uint8_t>();
-
-      debugInfoSemLinha("Vento: ");
-      Serial.println(vento);
-    }
-    else
-    {
-      debugErro("vento inválido.");
-      return;
-    }
-  }
-  else
-  {
-    debugErro("Objeto ar-condicionado inválido.");
-    return;
-  }
-  enviarACK();
-  controlarAr();
+    enviarACK();
+    controlarAr();
 }
 
 void enviarACK()
@@ -173,31 +181,69 @@ void enviarACK()
 
     publicarMensagem(
         "senai134/fellipe/esp32/status",
-        buffer
-    );
+        buffer);
 
     debugInfo("Mensagem enviada ao grupo LCD com sucesso.");
 }
 
 void controlarAr()
 {
-            // ===== LIGAR =====
-        if(estado == 1)
-        {
-            ac.on();
+    // 1. CONFIGURA OS PARÂMETROS PRIMEIRO
+    // (Mudar o modo/vento altera o comando interno para "Alterar Ajuste")
+    ac.setTemp(temperatura);
 
-            ac.send();
+    switch(modo)
+    {
+        case 0:
+            ac.setMode(kFujitsuAcModeCool);
+            break;
+        case 1:
+            ac.setMode(kFujitsuAcModeDry);
+            break;
+        case 2:
+            ac.setMode(kFujitsuAcModeFan);
+            break;
+        case 3:
+            ac.setMode(kFujitsuAcModeHeat);
+            break;
+    }
 
-            debugInfo("Ar ligado");
-        }
+    switch(vento)
+    {
+        case 0:
+            ac.setFanSpeed(kFujitsuAcFanAuto);
+            break;
+        case 1:
+            ac.setFanSpeed(kFujitsuAcFanQuiet);
+            break;
+        case 2:
+            ac.setFanSpeed(kFujitsuAcFanLow);
+            break;
+        case 3:
+            ac.setFanSpeed(kFujitsuAcFanMed);
+            break;
+        case 4:
+            ac.setFanSpeed(kFujitsuAcFanHigh);
+            break;
+    }
 
-        // ===== DESLIGAR =====
-        else
-        {
-            ac.off();
+    // 2. POR ÚLTIMO, O COMANDO DE ENERGIA
+    // ac.on() ou ac.off() vão sobrescrever o byte de comando, 
+    // garantindo que o ar entenda que deve LIGAR ou DESLIGAR,
+    // mas ainda levando junto a temperatura, modo e vento configurados acima.
+    if(estado == 1)
+    {
+        ac.on();
+        debugInfo("Ar configurado e ligado.");
+    }
+    else
+    {
+        ac.off();
+        debugInfo("Ar desligado.");
+    }
 
-            ac.send();
+    // 3. ENVIA O SINAL COMPLETO
+    ac.send();
 
-            debugInfo("Ar desligado");
-        }
+    Serial.println(ac.toString());
 }
