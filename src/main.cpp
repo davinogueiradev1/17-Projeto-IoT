@@ -6,6 +6,7 @@
 #include "WiFiManager.h"
 #include "MqttManager.h"
 #include <ArduinoJson.h>
+#include <ezTime.h>
 
 const char TOPICO_COMANDO[] = "senai134/fellipe/esp32/comando";
 
@@ -14,9 +15,12 @@ void tratarJsonComando(const String &mensagem);
 void enviarACK();
 void controlarAr();
 
+
 const uint8_t ESP_ID = 1;
 const uint16_t PINO_IR = 18;
 IRFujitsuAC ac(PINO_IR);
+Timezone timeStamp;
+
 
 uint8_t estado;
 uint8_t temperatura;
@@ -33,6 +37,9 @@ void setup()
     configurarMQTT();
     registrarCallbackMensagem(tratarMensagemRecebida);
     conectarMQTT();
+    setInterval(3600);
+    waitForSync();
+    timeStamp.setLocation("America/Sao_Paulo");
 }
 
 void loop()
@@ -40,6 +47,7 @@ void loop()
     garantirWiFiConectado();
     garantirMQTTConectado();
     loopMQTT();
+    events();
 }
 
 void tratarMensagemRecebida(const char *topico, const String &mensagem)
@@ -170,21 +178,31 @@ void enviarACK()
 {
     JsonDocument resposta;
 
-    JsonObject ar =
-        resposta["ar-condicionado"].to<JsonObject>();
+    JsonObject LCD = resposta["grupo LCD"].to<JsonObject>();
 
-    ar["codigo"] = 1000;
+    LCD["codigo"] = 1000;
 
-    char buffer[64];
+    // OPÇÃO 1: Enviar como TEXTO formatado (Ex: "2026-06-01T16:21:00-03:00")
+    LCD["timestamp"] = timeStamp.dateTime();
+
+    // OPÇÃO 2: Enviar como NÚMERO Unix Epoch (Ex: 1772472060)
+    // Se preferir o número puro, comente a linha de cima e use esta:
+    // LCD["timestamp"] = timeStamp.now();
+
+    // ATENÇÃO: Aumentei o buffer de 64 para 128 bytes! 
+    // Com o timestamp, o texto do JSON cresce e 64 bytes iriam cortar a mensagem.
+    char buffer[128];
 
     serializeJson(resposta, buffer);
 
     publicarMensagem(
         "senai134/fellipe/esp32/status",
-        buffer);
+        buffer
+    );
 
     debugInfo("Mensagem enviada ao grupo LCD com sucesso.");
 }
+
 
 void controlarAr()
 {
