@@ -16,10 +16,12 @@ void enviarACK();
 void controlarAr();
 
 const uint8_t ESP_ID = 2;
-const uint16_t PINO_IR = 18;
 uint8_t idAr;
+uint8_t espRecebido;
 
-IRFujitsuAC ac(PINO_IR);
+IRFujitsuAC ac18(18);
+IRFujitsuAC ac17(17);
+
 Timezone timeStamp;
 
 uint8_t estado;
@@ -30,15 +32,23 @@ uint8_t vento;
 void setup()
 {
     configurarDebug();
-    ac.begin();
-    ac.setModel(ARRAH2E);
-    ac.setId(0);
+
+    ac18.begin();
+    ac18.setModel(ARRAH2E);
+    ac18.setId(0);
+
+    ac17.begin();
+    ac17.setModel(ARRAH2E);
+    ac17.setId(0);
+
     conectarWiFi();
     configurarMQTT();
     registrarCallbackMensagem(tratarMensagemRecebida);
     conectarMQTT();
+
     setInterval(3600);
     waitForSync();
+
     timeStamp.setLocation("America/Sao_Paulo");
 }
 
@@ -93,9 +103,9 @@ void tratarJsonComando(const String &mensagem)
 
         if (ar["esp"].is<uint8_t>())
         {
-            uint8_t esp = ar["esp"].as<uint8_t>();
+            espRecebido = ar["esp"].as<uint8_t>();
 
-            if (esp != 0 && esp != ESP_ID)
+            if (espRecebido != 0 && espRecebido != ESP_ID)
             {
                 return;
             }
@@ -106,39 +116,39 @@ void tratarJsonComando(const String &mensagem)
             return;
         }
 
-        if (ar["id_ar"].is<uint8_t>())
+       if (espRecebido != 0)
+{
+    if (ar["id_ar"].is<uint8_t>())
+    {
+        idAr = ar["id_ar"].as<uint8_t>();
+
+        if (ESP_ID == 1)
         {
-            idAr = ar["id_ar"].as<uint8_t>();
-
-            // ESP 1 controla apenas os ARs 1 e 2
-            if (ESP_ID == 1)
+            if (idAr != 1 && idAr != 2)
             {
-                if (idAr != 1 && idAr != 2)
-                {
-                    debugInfo("AR nao pertence a este ESP.");
-                    return;
-                }
+                debugInfo("AR nao pertence a este ESP.");
+                return;
             }
-
-            // ESP 2 controla apenas os ARs 3 e 4
-            if (ESP_ID == 2)
-            {
-                if (idAr != 3 && idAr != 4)
-                {
-                    debugInfo("AR nao pertence a este ESP.");
-                    return;
-                }
-            }
-
-            debugInfoSemLinha("ID AR: ");
-            Serial.println(idAr);
-        }
-        else
-        {
-            debugErro("ID do ar invalido.");
-            return;
         }
 
+        if (ESP_ID == 2)
+        {
+            if (idAr != 3 && idAr != 4)
+            {
+                debugInfo("AR nao pertence a este ESP.");
+                return;
+            }
+        }
+
+        debugInfoSemLinha("ID AR: ");
+        Serial.println(idAr);
+    }
+    else
+    {
+        debugErro("ID do ar invalido.");
+        return;
+    }
+}
         if (ar["estado"].is<uint8_t>())
         {
             estado = ar["estado"].as<uint8_t>();
@@ -159,7 +169,6 @@ void tratarJsonComando(const String &mensagem)
             if (temperatura < 18)
                 temperatura = 18;
 
-            // Proteção para não virar uma sauna
             if (temperatura > 30)
                 temperatura = 30;
 
@@ -181,7 +190,7 @@ void tratarJsonComando(const String &mensagem)
         }
         else
         {
-            debugErro("modo inválido.");
+            debugErro("Modo inválido.");
             return;
         }
 
@@ -194,7 +203,7 @@ void tratarJsonComando(const String &mensagem)
         }
         else
         {
-            debugErro("vento inválido.");
+            debugErro("Vento inválido.");
             return;
         }
     }
@@ -203,6 +212,7 @@ void tratarJsonComando(const String &mensagem)
         debugErro("Objeto ar-condicionado inválido.");
         return;
     }
+
     enviarACK();
     controlarAr();
 }
@@ -214,16 +224,8 @@ void enviarACK()
     JsonObject LCD = resposta["grupo LCD"].to<JsonObject>();
 
     LCD["codigo"] = 1000;
-
-    // OPÇÃO 1: Enviar como TEXTO formatado (Ex: "2026-06-01T16:21:00-03:00")
     LCD["timestamp"] = timeStamp.dateTime();
 
-    // OPÇÃO 2: Enviar como NÚMERO Unix Epoch (Ex: 1772472060)
-    // Se preferir o número puro, comente a linha de cima e use esta:
-    // LCD["timestamp"] = timeStamp.now();
-
-    // ATENÇÃO: Aumentei o buffer de 64 para 128 bytes!
-    // Com o timestamp, o texto do JSON cresce e 64 bytes iriam cortar a mensagem.
     char buffer[128];
 
     serializeJson(resposta, buffer);
@@ -237,62 +239,132 @@ void enviarACK()
 
 void controlarAr()
 {
-    // 1. CONFIGURA OS PARÂMETROS PRIMEIRO
-    // (Mudar o modo/vento altera o comando interno para "Alterar Ajuste")
-    ac.setTemp(temperatura);
+    if (espRecebido == 0)
+{
+    IRFujitsuAC* aparelhos[] = { &ac18, &ac17 };
+
+    for (int i = 0; i < 2; i++)
+    {
+        aparelhos[i]->setTemp(temperatura);
+
+        switch (modo)
+        {
+        case 0:
+            aparelhos[i]->setMode(kFujitsuAcModeCool);
+            break;
+        case 1:
+            aparelhos[i]->setMode(kFujitsuAcModeDry);
+            break;
+        case 2:
+            aparelhos[i]->setMode(kFujitsuAcModeFan);
+            break;
+        case 3:
+            aparelhos[i]->setMode(kFujitsuAcModeHeat);
+            break;
+        }
+
+        switch (vento)
+        {
+        case 0:
+            aparelhos[i]->setFanSpeed(kFujitsuAcFanAuto);
+            break;
+        case 1:
+            aparelhos[i]->setFanSpeed(kFujitsuAcFanQuiet);
+            break;
+        case 2:
+            aparelhos[i]->setFanSpeed(kFujitsuAcFanLow);
+            break;
+        case 3:
+            aparelhos[i]->setFanSpeed(kFujitsuAcFanMed);
+            break;
+        case 4:
+            aparelhos[i]->setFanSpeed(kFujitsuAcFanHigh);
+            break;
+        }
+
+        if (estado == 1)
+            aparelhos[i]->on();
+        else
+            aparelhos[i]->off();
+
+        aparelhos[i]->send();
+    }
+
+    debugInfo("Comando enviado para todos os ares deste ESP.");
+    return;
+}
+    IRFujitsuAC *acSelecionado = nullptr;
+
+    if (ESP_ID == 1)
+    {
+        if (idAr == 1)
+            acSelecionado = &ac18;
+        else if (idAr == 2)
+            acSelecionado = &ac17;
+    }
+    else if (ESP_ID == 2)
+    {
+        if (idAr == 3)
+            acSelecionado = &ac18;
+        else if (idAr == 4)
+            acSelecionado = &ac17;
+    }
+
+    if (acSelecionado == nullptr)
+    {
+        debugErro("Nenhum emissor IR selecionado.");
+        return;
+    }
+
+    acSelecionado->setTemp(temperatura);
 
     switch (modo)
     {
     case 0:
-        ac.setMode(kFujitsuAcModeCool);
+        acSelecionado->setMode(kFujitsuAcModeCool);
         break;
     case 1:
-        ac.setMode(kFujitsuAcModeDry);
+        acSelecionado->setMode(kFujitsuAcModeDry);
         break;
     case 2:
-        ac.setMode(kFujitsuAcModeFan);
+        acSelecionado->setMode(kFujitsuAcModeFan);
         break;
     case 3:
-        ac.setMode(kFujitsuAcModeHeat);
+        acSelecionado->setMode(kFujitsuAcModeHeat);
         break;
     }
 
     switch (vento)
     {
     case 0:
-        ac.setFanSpeed(kFujitsuAcFanAuto);
+        acSelecionado->setFanSpeed(kFujitsuAcFanAuto);
         break;
     case 1:
-        ac.setFanSpeed(kFujitsuAcFanQuiet);
+        acSelecionado->setFanSpeed(kFujitsuAcFanQuiet);
         break;
     case 2:
-        ac.setFanSpeed(kFujitsuAcFanLow);
+        acSelecionado->setFanSpeed(kFujitsuAcFanLow);
         break;
     case 3:
-        ac.setFanSpeed(kFujitsuAcFanMed);
+        acSelecionado->setFanSpeed(kFujitsuAcFanMed);
         break;
     case 4:
-        ac.setFanSpeed(kFujitsuAcFanHigh);
+        acSelecionado->setFanSpeed(kFujitsuAcFanHigh);
         break;
     }
 
-    // 2. POR ÚLTIMO, O COMANDO DE ENERGIA
-    // ac.on() ou ac.off() vão sobrescrever o byte de comando,
-    // garantindo que o ar entenda que deve LIGAR ou DESLIGAR,
-    // mas ainda levando junto a temperatura, modo e vento configurados acima.
     if (estado == 1)
     {
-        ac.on();
+        acSelecionado->on();
         debugInfo("Ar configurado e ligado.");
     }
     else
     {
-        ac.off();
+        acSelecionado->off();
         debugInfo("Ar desligado.");
     }
 
-    // 3. ENVIA O SINAL COMPLETO
-    ac.send();
+    acSelecionado->send();
 
-    Serial.println(ac.toString());
+    Serial.println(acSelecionado->toString());
 }
