@@ -1,12 +1,13 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
+#include <ezTime.h>
 #include <DebugManager.h>
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include <ir_Fujitsu.h>
 #include "WiFiManager.h"
 #include "MqttManager.h"
-#include <ArduinoJson.h>
-#include <ezTime.h>
+
 
 // * Topico Comando
 const char TOPICO_COMANDO[] = "senai134/equipe/dk/devices/receber";
@@ -20,11 +21,15 @@ void controlarAr();
 // * Variáveis
 const uint8_t ESP_ID = 2; // qual o esp que esta sendo usado. ESP 1 controla apenas os ares 1 (pino 18) e 2 (pino 17)
 //, enquanto o ESP 2 controla os ares 3 (pino 18) e 4 (pino 17)
+
 uint8_t idAr;         // arcondicionado (1, 2, 3, 4) identificado na mensagem json
 uint8_t espRecebido;  // esp (1, 2) identificado na mensagem json
+
 IRFujitsuAC ac18(18); // identifica o ar-condicionado 1 (esp1) ou arcondicionado 3 (esp2)
 IRFujitsuAC ac17(17); // identifica o ar-condicionado 2 (esp1) ou arcondicionado 4 (esp2)
+
 Timezone timeStamp;   // variável do timestamp
+
 uint8_t estado;       // estado (on ou off) do arcondicionado
 uint8_t temperatura;  // define temperatura de 18 a 30 graus do arcondicionado selecionado
 uint8_t modo;         // coloca o modo do arcondicionado (cool, dry, fan, heat)
