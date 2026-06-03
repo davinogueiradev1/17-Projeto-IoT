@@ -9,7 +9,7 @@
 #include <ezTime.h>
 
 // * Topico Comando
-const char TOPICO_COMANDO[] = "senai134/fellipe/esp32/comando";
+const char TOPICO_COMANDO[] = "senai134/equipe/dk/devices/receber";
 
 // * Declaração das Funções
 void tratarMensagemRecebida(const char *topico, const String &mensagem);
@@ -233,7 +233,7 @@ void enviarACK()
     char buffer[128];
     serializeJson(resposta, buffer);
     publicarMensagem(
-        "senai134/fellipe/esp32/status",
+        "senai134/equipe/dk/devices/publicar",
         buffer);
     debugInfo("Mensagem enviada ao grupo LCD com sucesso.");
 }
