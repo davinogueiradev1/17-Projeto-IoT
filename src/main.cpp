@@ -10,7 +10,7 @@
 
 
 // * Topico Comando
-const char TOPICO_COMANDO[] = "senai134/equipe/dk/devices/receber";
+const char TOPICO_COMANDO[] = "senai134/shared/projeto/AC";
 
 // * Declaração das Funções
 void tratarMensagemRecebida(const char *topico, const String &mensagem);
@@ -238,7 +238,7 @@ void enviarACK()
     char buffer[128];
     serializeJson(resposta, buffer);
     publicarMensagem(
-        "senai134/equipe/dk/devices/publicar",
+        "senai134/shared/projeto/status",
         buffer);
     debugInfo("Mensagem enviada ao grupo LCD com sucesso.");
 }

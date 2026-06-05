@@ -120,12 +120,12 @@ const int AWS_IOT_PORT = 8883;
 
 //raw string
 const char* TOPICOS_PUBLICAR[] = {
-    "senai134/equipe/dk/devices/publicar"
+    "senai134/shared/projeto/status"
 };
 const int TOTAL_TOPICOS_PUBLICAR = sizeof(TOPICOS_PUBLICAR) / sizeof (TOPICOS_PUBLICAR[0]);
 
 const char* TOPICOS_RECEBER[] = {
-    "senai134/equipe/dk/devices/receber"
+    "senai134/shared/projeto/AC"
 };
 const int TOTAL_TOPICOS_RECEBER = sizeof(TOPICOS_RECEBER) / sizeof (TOPICOS_RECEBER[0]);   //quantos topicos eu posso receber
 
