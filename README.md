@@ -28,20 +28,20 @@ O sistema foi projetado para possibilitar o gerenciamento centralizado de múlti
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
-- 📡 Comunicação MQTT
-- 🌐 Conexão Wi-Fi
-- 🔘 Liga/Desliga remoto
-- 🌡️ Controle de temperatura
-- ❄️ Alteração de modo de operação
-- 💨 Controle da velocidade do ventilador
-- 📄 Processamento de mensagens JSON
-- 🏠 Aplicação em automação residencial
+• Comunicação MQTT
+• Conexão Wi-Fi
+• Liga/Desliga remoto
+• Controle de temperatura
+• Alteração de modo de operação
+• Controle da velocidade do ventilador
+• Processamento de mensagens JSON
+• Aplicação em automação residencial
 
 ---
 
-## 🏗️ Arquitetura do Sistema
+## Arquitetura do Sistema
 
 ```text
 ┌─────────────────────┐
@@ -50,7 +50,7 @@ O sistema foi projetado para possibilitar o gerenciamento centralizado de múlti
            │
            ▼
 ┌─────────────────────┐
-│ Interface de Controle│
+│Interface de Controle│
 └──────────┬──────────┘
            │
            ▼
@@ -76,7 +76,7 @@ O sistema foi projetado para possibilitar o gerenciamento centralizado de múlti
 
 ---
 
-## 📦 Estrutura da Mensagem MQTT
+## Estrutura da Mensagem MQTT
 
 Exemplo de mensagem recebida pelo ESP32:
 
@@ -94,7 +94,7 @@ Exemplo de mensagem recebida pelo ESP32:
 
 ---
 
-## 📋 Parâmetros
+## Parâmetros
 
 | Campo | Tipo | Descrição |
 |---------|---------|-----------|
@@ -106,7 +106,7 @@ Exemplo de mensagem recebida pelo ESP32:
 
 ---
 
-## ❄️ Modos de Operação
+## Modos de Operação
 
 | Valor | Modo |
 |---------|---------|
@@ -117,7 +117,7 @@ Exemplo de mensagem recebida pelo ESP32:
 
 ---
 
-## 💨 Velocidades do Ventilador
+## Velocidades do Ventilador
 
 | Valor | Velocidade |
 |---------|---------|
@@ -128,35 +128,35 @@ Exemplo de mensagem recebida pelo ESP32:
 
 ---
 
-## 🔧 Hardware Utilizado
+## Hardware Utilizado
 
-- ESP32
-- LED Infravermelho (IR)
-- Resistor para o LED IR
-- Fonte de alimentação USB
-- Ar-condicionado compatível com controle infravermelho
-
----
-
-## 🛠️ Tecnologias Utilizadas
-
-- ESP32
-- Arduino Framework
-- MQTT
-- JSON
-- Wi-Fi
-- IRremoteESP8266
-- Git
-- GitHub
+• ESP32
+• LED Infravermelho (IR)
+• Resistor para o LED IR
+• Fonte de alimentação USB
+• Ar-condicionado compatível com controle infravermelho
 
 ---
 
-## 🚀 Instalação
+## Tecnologias Utilizadas
+
+• ESP32
+• Arduino Framework
+• MQTT
+• JSON
+• Wi-Fi
+• IRremoteESP8266
+• Git
+• GitHub
+
+---
+
+## Instalação
 
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/smart-ac-control.git
+git clone //https://github.com/davinogueiradev1/17-Projeto-IoT
 ```
 
 ### 2. Configurar credenciais Wi-Fi
@@ -178,24 +178,24 @@ Exemplo:
 
 Defina:
 
-- Endereço do broker
-- Porta
-- Usuário
-- Senha
-- Tópico de comunicação
+• Endereço do broker
+• Porta
+• Usuário
+• Senha
+• Tópico de comunicação
 
 ### 4. Compilar e gravar
 
 Utilize:
 
-- Arduino IDE
-- PlatformIO
+• Arduino IDE
+• PlatformIO
 
-Envie o firmware para o ESP32.
+Envie o firmware para o ESP-32.
 
 ---
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```text
 src/
@@ -217,19 +217,19 @@ README.md
 
 ---
 
-## 🎯 Objetivos do Projeto
+## Objetivos do Projeto
 
-- Aplicar conceitos de IoT
-- Utilizar comunicação MQTT
-- Integrar sistemas embarcados
-- Controlar dispositivos físicos através de software
-- Desenvolver uma solução escalável para automação residencial
+• Aplicar conceitos de IoT
+• Utilizar comunicação MQTT
+• Integrar sistemas embarcados
+• Controlar dispositivos físicos através de software
+• Desenvolver uma solução escalável para automação residencial
 
 ---
 
-## 👨‍💻 Equipe
+## Equipe
 
-| Integrante | Responsabilidade |
+| Integrantes | Responsabilidades |
 |------------|------------------|
 | Davi Nogueira | Desenvolvimento do sistema |
 | Fellipe Simon | Integração e interface |
@@ -239,20 +239,20 @@ README.md
 
 ---
 
-## 📚 Conceitos Aplicados
+## Conceitos Aplicados
 
-- Internet das Coisas (IoT)
-- Sistemas Embarcados
-- MQTT
-- Redes de Computadores
-- Comunicação sem fio
-- JSON
-- Automação Residencial
-- Programação em C++
+• Internet das Coisas (IoT)
+• Sistemas Embarcados
+• MQTT
+• Redes de Computadores
+• Comunicação sem fio
+• JSON
+• Automação Residencial
+• Programação em C++
 
 ---
 
-## 📄 Licença
+## Licença
 
 Este projeto foi desenvolvido para fins acadêmicos e educacionais.
 
@@ -260,10 +260,10 @@ Este projeto foi desenvolvido para fins acadêmicos e educacionais.
 
 <div align="center">
 
-### ❄️ Smart AC Control
+### Smart AC Control
 
 Controle inteligente de ar-condicionado utilizando ESP32, MQTT e comunicação infravermelha.
 
-⭐ Se este projeto foi útil para você, considere deixar uma estrela no repositório.
+⭐ Se este projeto foi útil para você, considere deixar uma estrela no repositório!
 
 </div>
