@@ -46,6 +46,7 @@ void setup()
     ac18.begin();
     ac18.setModel(ARRAH2E);
     ac18.setId(0);
+
     ac17.begin();
     ac17.setModel(ARRAH2E);
     ac17.setId(0);
@@ -234,11 +235,16 @@ void enviarACK()
     JsonDocument resposta;
     JsonObject LCD = resposta["grupo LCD"].to<JsonObject>();
     LCD["codigo"] = 1000;
-    LCD["timestamp"] = timeStamp.dateTime();
+    LCD["timestamp"] = timeStamp.now();
+    LCD["Estado"] = estado;
+    LCD["Temperatura"] = temperatura;
+    LCD["Modo"] = modo;
+    LCD["Vento"] = vento;
+
     char buffer[128];
     serializeJson(resposta, buffer);
     publicarMensagem(
-        "senai134/shared/projeto/status",
+        "senai134/shared/projeto/statusAC",
         buffer);
     debugInfo("Mensagem enviada ao grupo LCD com sucesso.");
 }
@@ -293,6 +299,8 @@ void controlarAr()
                 aparelhos[i]->setFanSpeed(kFujitsuAcFanHigh);
                 break;
             }
+
+            aparelhos[i]->setSwing(kFujitsuAcSwingOff);
 
             if (estado == 1)
                 aparelhos[i]->on();
@@ -365,6 +373,8 @@ void controlarAr()
         acSelecionado->setFanSpeed(kFujitsuAcFanHigh);
         break;
     }
+
+    acSelecionado->setSwing(kFujitsuAcSwingOff);
 
     if (estado == 1)
     {
